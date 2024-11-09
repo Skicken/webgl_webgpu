@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "lib": ["dom", "esnext"],
+    "types": ["@webgpu/types", "@types/web", "@types/three"],
+    "paths": {
+      "src/*": ["./src/*"]
+    }
+  },
+}
