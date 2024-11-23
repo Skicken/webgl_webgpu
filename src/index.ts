@@ -1,20 +1,39 @@
-import "./styles/styles.scss"
+import { GlScene1 } from "./gl/Scene1";
+import { timer as timer } from "./profiler";
+import "./styles/styles.scss";
 import GUI from "lil-gui";
+import Stats from "stats.js";
 
 const gui = new GUI();
-gui.add( document, 'title' );
+const profiler = gui.addFolder("Profiler");
+
+profiler.add(timer, "profilerExecutionInSeconds", 1, 60, 1);
+profiler.add(timer, "startProfiler");
+profiler.add(timer, "stopProfiler");
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-const context = canvas.getContext("webgl") as WebGLRenderingContext;
+canvas.width = 1920;
+canvas.height = 1080;
 
-context.viewport(0, 0, canvas.width, canvas.height);
-context.clearColor(0.0,0,0,1);
+const scene = new GlScene1();
+scene.init(canvas, gui);
 
+const fps = new Stats();
+
+fps.showPanel(0);
+
+document.body.appendChild(fps.dom);
 
 (function frame() {
+    fps.begin();
+    
+    timer.lastTimestamp = timer.currentTimestamp;
+    timer.currentTimestamp = performance.now();
 
-  context.clear(context.COLOR_BUFFER_BIT);
-  requestAnimationFrame(frame);
-
+    scene.update(timer.deltaTime)
+    //rendering
+    timer.updateProfiler();
+    requestAnimationFrame(frame);
+    fps.end();
+    //setTimeout(frame, 10);
 })();
-
