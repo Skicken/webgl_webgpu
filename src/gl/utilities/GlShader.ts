@@ -79,16 +79,12 @@ export class GlShader {
         return location;
     }
     SetUniform1f(name: string, value: number) {
-        this.gl.uniform1f(
-            this.GetUniformLocation(name),
-            value
-        );
+        this.gl.uniform1f(this.GetUniformLocation(name), value);
+    }
+    SetUniform1i(name: string, value: number) {
+        this.gl.uniform1i(this.GetUniformLocation(name), value);
     }
     SetUniformMatrix(name: string, matrix: mat4) {
-        this.gl.uniformMatrix4fv(
-            this.GetUniformLocation(name),
-            false,
-            matrix
-        );
+        this.gl.uniformMatrix4fv(this.GetUniformLocation(name), false, matrix);
     }
 }
