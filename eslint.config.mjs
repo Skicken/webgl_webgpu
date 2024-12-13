@@ -1,49 +1,26 @@
 import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
-import importPlugin from "eslint-plugin-import";
-
+import eslintPluginImportX from 'eslint-plugin-import-x'
+import tsParser from '@typescript-eslint/parser'
 export default [
     { files: ["**/*.{js,mjs,cjs,ts}"] },
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
-    importPlugin.flatConfigs.recommended,
+    eslintPluginImportX.flatConfigs.recommended,
+    eslintPluginImportX.flatConfigs.typescript,
     {
-        files: ["**/*.{js,mjs,cjs}"],
+        files: ["**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}"],
+        ignores: ["eslint.config.js"],
         languageOptions: {
-            ecmaVersion: "latest", // Latest ECMAScript version
-            sourceType: "module" // Ensure it's treated as an ES module
-        },
-        settings: {
-            "import/resolver": {
-                typescript: {
-                    project: "./tsconfig.json" // Point ESLint to your tsconfig
-                }
-            }
+            parser: tsParser,
+            ecmaVersion: "latest",
+            sourceType: "module"
         },
         rules: {
-            "no-unused-vars": "off", // Disable because TypeScript handles this
-            "import/no-dynamic-require": "warn", // Warn on dynamic require
-            "import/no-nodejs-modules": "warn" // Warn on Node.js modules
+            "no-unused-vars": "off",
+            "import-x/no-dynamic-require": "warn",
+            "import-x/no-nodejs-modules": "warn"
         }
     },
 
-    // Custom rule to resolve imports from src/ alias
-    {
-        files: ["**/*.ts"],
-        settings: {
-            "import/resolver": {
-                typescript: {
-                    project: "./tsconfig.json" // Point ESLint to your tsconfig
-                }
-            }
-        },
-        rules: {
-            "import/no-unresolved": [
-                "error",
-                {
-                    ignore: ["^src/"] // Ignore unresolved imports for the `src` alias
-                }
-            ]
-        }
-    }
 ];
