@@ -12,7 +12,7 @@ export class Camera {
     yaw = 0;
     pitch = 0;
     radius = 10;
-    minRadius = 3;
+    minRadius = 2;
     maxRadius = 20;
     constructor() {
         this.projectionMatrix = mat4.perspective(

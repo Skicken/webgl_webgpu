@@ -1,17 +1,17 @@
-import { canvasHeight, canvasWidth } from "./general";
-import { GlScene1 } from "./gl/Scene1GL";
-import { Input } from "./input";
-import { timer as timer } from "./profiler";
 import "./styles/styles.scss";
 import GUI from "lil-gui";
+import { timer } from "src/profiler";
 import Stats from "stats.js";
+import { GlScene1 } from "src/gl/Scene1GL";
+import { Input } from "src/input";
+import { canvasHeight, canvasWidth } from "src/general";
 
 const gui = new GUI();
 const profiler = gui.addFolder("Profiler");
 
 profiler.add(timer, "profilerExecutionInSeconds", 1, 60, 1);
 profiler.add(timer, "startProfiler");
-profiler.add(timer, "stopProfiler");
+profiler.add(timer, "stopProfiler")
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 canvas.width = canvasWidth;
@@ -66,13 +66,12 @@ canvas.addEventListener("wheel", (e) => {
 function fadeOut() {
     if (!fadeOutActive) return;
 
-    Input.scroll *= 0.95; 
+    Input.scroll *= 0.90; 
     if (Math.abs(Input.scroll) < 0.001) {
         Input.scroll = 0;
         fadeOutActive = false;
         return;
     }
-    requestAnimationFrame(fadeOut);
 }
 
 canvas.addEventListener("mousedown", () => {
@@ -97,5 +96,6 @@ canvas.addEventListener("mouseup", () => {
     timer.updateProfiler();
     requestAnimationFrame(frame);
     fps.end();
+    fadeOut();
     //setTimeout(frame, 10);
 })();
