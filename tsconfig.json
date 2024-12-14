@@ -7,6 +7,8 @@
     "module": "esnext", // Use ESNext module system (use ESM)
     "moduleResolution": "node", // Use Node.js module resolution
     "baseUrl": ".", // Base directory for module resolution (current directory)
+    "lib": ["dom", "esnext"],
+    "types": ["@webgpu/types","@types/web"],
     "paths": {
       "src/*": ["./src/*"] // Path alias for src
     }

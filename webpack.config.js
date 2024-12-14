@@ -17,11 +17,11 @@ const config = {
         host: "localhost",
         static: [
             {
-                directory: path.join(__dirname, "public"), 
-                publicPath: "/assets" 
+                directory: path.join(__dirname, "public"),
+                publicPath: "/assets"
             },
             {
-                directory: path.join(__dirname, "dist") 
+                directory: path.join(__dirname, "dist")
             }
         ],
         compress: true,
@@ -32,6 +32,7 @@ const config = {
             template: "index.html"
         })
     ],
+
     module: {
         rules: [
             {
@@ -49,12 +50,17 @@ const config = {
                 generator: {
                     filename: "assets/[name][ext]"
                 }
+            },
+            {
+                test: /\.(glsl|wgsl)$/i,
+                type: "asset/source"
             }
 
             // AddRRour rules for custom modules here
             // Learn more about loaders from https://webpack.js.org/loaders/
         ]
     },
+
     resolve: {
         extensions: [".tsx", ".ts", ".jsx", ".js", "..."],
         alias: {
