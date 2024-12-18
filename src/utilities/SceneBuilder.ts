@@ -1,7 +1,7 @@
 import { GlScene1 } from "src/gl/Scene1GL";
-import { WebGPUScene1 } from "src/webgpu/Scene1WebGPU";
 import { GlScene2 } from "src/gl/Scene2GL";
 import { Scene } from "src/shared/scene";
+import { WebGPUScene1 } from "src/webgpu/Scene1WebGPU";
 
 export const WebGLSceneMap: Map<string, new () => Scene> = new Map<
     string,

@@ -1,15 +1,15 @@
-import { GlShader } from "./utilities/GlShader";
-import GUI from "lil-gui";
-import { Transform } from "./utilities/Transform";
-import { Camera } from "./utilities/Camera";
-
-import earthTexture from "src/textures/earth.jpg";
-import earthNightTexture from "src/textures/earth_night.jpg";
-import earthCloudsTexture from "src/textures/earth_clouds.jpg";
+import { GUI } from "lil-gui";
 import { Sphere } from "src/meshes/Sphere";
-import { TextureGL } from "./utilities/TextureGL";
-import { GLGeometry } from "./utilities/GLGeometry";
 import { Scene } from "src/shared/scene";
+import earthTexture from "src/textures/earth.jpg";
+import earthCloudsTexture from "src/textures/earth_clouds.jpg";
+import earthNightTexture from "src/textures/earth_night.jpg";
+
+import { Camera } from "./utilities/Camera";
+import { GLGeometry } from "./utilities/GLGeometry";
+import { GlShader } from "./utilities/GlShader";
+import { TextureGL } from "./utilities/TextureGL";
+import { Transform } from "./utilities/Transform";
 
 export class GlScene2 implements Scene {
     private gl: WebGL2RenderingContext;

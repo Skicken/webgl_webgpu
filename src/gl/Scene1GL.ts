@@ -1,10 +1,11 @@
-import { GlShader } from "./utilities/GlShader";
-import GUI from "lil-gui";
-import { Camera } from "./utilities/Camera";
+import { GUI } from "lil-gui";
+import { GenerateParticleBuffer } from "src/shared/particleGenerator";
+import { Scene } from "src/shared/scene";
+
 import FragmentShader from "./shaders/Scene1/fragment.glsl";
 import VertexShader from "./shaders/Scene1/vertex.glsl";
-import { Scene } from "src/shared/scene";
-import { GenerateParticleBuffer } from "src/shared/particleGenerator";
+import { Camera } from "./utilities/Camera";
+import { GlShader } from "./utilities/GlShader";
 
 export class GlScene1 implements Scene {
     private gl: WebGL2RenderingContext;
@@ -35,7 +36,7 @@ export class GlScene1 implements Scene {
         this.gl.drawArrays(this.gl.POINTS, 0, this.particleCount);
     }
     init(canvas: HTMLCanvasElement, gui: GUI | undefined) {
-        console.log("initializing "+ GlScene1.sceneName);
+        console.log("initializing " + GlScene1.sceneName);
         this.canvas = canvas;
         this.gl = canvas.getContext("webgl2") as WebGL2RenderingContext;
         this.gui = gui.addFolder(GlScene1.sceneName);

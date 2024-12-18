@@ -1,11 +1,21 @@
 import pluginJs from "@eslint/js";
+import tsParser from "@typescript-eslint/parser";
+import eslintPluginImportX from "eslint-plugin-import-x";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
 import tseslint from "typescript-eslint";
-import eslintPluginImportX from 'eslint-plugin-import-x'
-import tsParser from '@typescript-eslint/parser'
 export default [
-    { files: ["**/*.{js,mjs,cjs,ts}"] },
+    { files: ["**/*.{ts}"] },
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
+    {
+        plugins: {
+            "simple-import-sort": simpleImportSort,
+        },
+        rules: {
+            "simple-import-sort/imports": "error",
+            "simple-import-sort/exports": "error",
+        }
+    },
     eslintPluginImportX.flatConfigs.recommended,
     eslintPluginImportX.flatConfigs.typescript,
     {
@@ -22,5 +32,18 @@ export default [
             "import-x/no-nodejs-modules": "warn"
         }
     },
-
+    {
+        settings: {
+            "import-x/resolver": {
+                typescript: {
+                    alwaysTryTypes: true,
+                    project: "./tsconfig.json"
+                },
+                node: {
+                    extensions: [".js", ".jsx", ".ts", ".tsx"],
+                    moduleDirectory: ["node_modules", "src/"]
+                }
+            }
+        }
+    }
 ];

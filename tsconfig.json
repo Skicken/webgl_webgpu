@@ -1,19 +1,17 @@
-
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true, // Allows default imports for non-ES modules
-    "noImplicitAny": true, // Prevents variables from having the 'any' type implicitly
-    "esModuleInterop": true, // Ensures compatibility between CommonJS and ES modules
-    "module": "esnext", // Use ESNext module system (use ESM)
-    "moduleResolution": "node", // Use Node.js module resolution
-    "baseUrl": ".", // Base directory for module resolution (current directory)
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "baseUrl": ".",
     "lib": ["dom", "esnext"],
-    "types": ["@webgpu/types","@types/web"],
+    "types": ["@webgpu/types", "@types/web"],
     "paths": {
-      "src/*": ["./src/*"] // Path alias for src
+      "src/*": ["./src/*"]
     }
   },
-
-  "include": ["src/**/*", "global.d.ts"],  // Ensure your global.d.ts is included
-  "exclude": ["node_modules"] // Exclude node_modules from compilation
+  "include": ["src/**/*", "global.d.ts"],
+  "exclude": ["node_modules"]
 }

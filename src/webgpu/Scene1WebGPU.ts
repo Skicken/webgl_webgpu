@@ -1,9 +1,10 @@
-import GUI from "lil-gui";
+import { GUI } from "lil-gui";
+import { DisplayNoSupport } from "src/general";
+import { GenerateParticleBuffer } from "src/shared/particleGenerator";
 import { Scene } from "src/shared/scene";
+
 import ShaderSource from "./shaders/scene1.wgsl";
 import { Camera } from "./utilites/Camera";
-import { GenerateParticleBuffer } from "src/shared/particleGenerator";
-import { DisplayNoSupport } from "src/general";
 
 export class WebGPUScene1 implements Scene {
     constructor() {}
@@ -32,7 +33,7 @@ export class WebGPUScene1 implements Scene {
         }
 
         const adapter = await navigator.gpu.requestAdapter();
-        console.log(adapter)
+        console.log(adapter);
         if (!adapter) {
             this.webgpuIsSupported = false;
             return;
@@ -58,7 +59,7 @@ export class WebGPUScene1 implements Scene {
         this.context = this.canvas.getContext("webgpu") as GPUCanvasContext;
         this.context.configure({
             device: this.device,
-            format: navigator.gpu.getPreferredCanvasFormat(),
+            format: navigator.gpu.getPreferredCanvasFormat()
         });
         this.initScene();
     }
@@ -126,7 +127,7 @@ export class WebGPUScene1 implements Scene {
                         format: "float32x3" as GPUVertexFormat
                     },
                     {
-                        shaderLocation: 1, 
+                        shaderLocation: 1,
                         offset: 12,
                         format: "float32x2" as GPUVertexFormat
                     }

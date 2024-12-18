@@ -1,4 +1,5 @@
 import { vec3 } from "wgpu-matrix";
+
 import { GeometryBuffer } from "./GeometryBuffer";
 
 export interface SphereMesh {
@@ -102,4 +103,3 @@ export class Sphere extends GeometryBuffer {
         this.indices = new Uint32Array(indices);
     }
 }
-

@@ -46,6 +46,7 @@
   "dependencies": {
     "@types/stats": "^0.16.30",
     "bowser": "^2.11.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
     "gl-matrix": "^3.4.3",
     "rand-seed": "^2.1.7",
     "stats.js": "^0.17.0",

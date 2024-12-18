@@ -1,12 +1,14 @@
 import "./styles/styles.scss";
-import GUI  from "lil-gui";
-import { timer } from "src/profiler";
-import Stats from "stats.js";
+
+import { GUI } from "lil-gui";
 import { canvasHeight, canvasWidth, HideNoSupport } from "src/general";
+import Stats from "stats.js";
+
 import { GlScene1 } from "./gl/Scene1GL";
-import { BuildScene, RendererScenesStrings } from "./utilities/SceneBuilder";
+import { timer } from "./profiler";
 import { Scene } from "./shared/scene";
-import { buildCanvas, scrollFadeOut } from "./utilities//CanvasBuilder";
+import { buildCanvas, scrollFadeOut } from "./utilities/CanvasBuilder";
+import { BuildScene, RendererScenesStrings } from "./utilities/SceneBuilder";
 
 const gui = new GUI();
 let canvas = buildCanvas();
@@ -74,5 +76,4 @@ document.body.appendChild(fps.dom);
     requestAnimationFrame(frame);
     fps.end();
     scrollFadeOut();
-    //setTimeout(frame, 10);
 })();

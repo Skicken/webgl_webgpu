@@ -1,6 +1,6 @@
 import { aspectRatio } from "src/general";
-import { vec3, mat4, quat } from "wgpu-matrix";
 import { Input } from "src/input";
+import { mat4, quat,vec3 } from "wgpu-matrix";
 export class Camera {
     sensivity = 10;
     origin = vec3.fromValues(0, 0, 0);
