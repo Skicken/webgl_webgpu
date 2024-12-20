@@ -6,7 +6,7 @@ export class Icosphere extends GeometryBuffer {
         super();
 
         const vertices: Vertex[] = [];
-        const t = (1 + Math.sqrt(5)) / 2; // Golden ratio
+        const t = (1 + Math.sqrt(5)) / 2; 
 
         const initialPositions: [number, number, number][] = [
             [-1, t, 0],
@@ -71,7 +71,7 @@ export class Icosphere extends GeometryBuffer {
 
             const uv: [number, number] = [
                 0.5 + Math.atan2(nz, nx) / (2 * Math.PI),
-                0.5 - Math.asin(Math.min(1, Math.max(-1, ny))) / Math.PI // Clamp ny to [-1, 1]
+                0.5 - Math.asin(Math.min(1, Math.max(-1, ny))) / Math.PI 
             ];
 
             const newIndex = vertices.length;

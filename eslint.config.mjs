@@ -9,11 +9,12 @@ export default [
     ...tseslint.configs.recommended,
     {
         plugins: {
-            "simple-import-sort": simpleImportSort,
+            "simple-import-sort": simpleImportSort
         },
         rules: {
             "simple-import-sort/imports": "error",
             "simple-import-sort/exports": "error",
+            "no-inline-comments": "error"
         }
     },
     eslintPluginImportX.flatConfigs.recommended,
@@ -28,8 +29,8 @@ export default [
         },
         rules: {
             "no-unused-vars": "off",
-            "import-x/no-dynamic-require": "warn",
-            "import-x/no-nodejs-modules": "warn"
+            "import-x/no-dynamic-require": "error",
+            "import-x/no-nodejs-modules": "off"
         }
     },
     {

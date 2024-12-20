@@ -1,10 +1,9 @@
 import { GUI } from "lil-gui";
 
 export interface Scene {
-    init(canvas: HTMLCanvasElement, gui: GUI | undefined): void ;
+    gui: GUI | undefined;
+    init(canvas: HTMLCanvasElement, gui: GUI | undefined): Promise<void>;
     update(deltaTime: number): void;
     render(): void;
     delete(): void;
 }
-
-

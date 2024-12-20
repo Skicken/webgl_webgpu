@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
@@ -35,6 +36,7 @@ const config = {
 
     module: {
         rules: [
+
             {
                 test: /\.(ts|tsx)$/i,
                 loader: "ts-loader",
@@ -45,11 +47,8 @@ const config = {
                 use: [stylesHandler, "css-loader", "sass-loader"]
             },
             {
-                test: /\.(png|jpg)$/i,
+                test: /\.(png|jpg|glb)$/i,
                 type: "asset/resource",
-                generator: {
-                    filename: "assets/[name][ext]"
-                }
             },
             {
                 test: /\.(glsl|wgsl)$/i,

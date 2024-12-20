@@ -1,8 +1,9 @@
 import { mat4, quat, vec3 } from "gl-matrix";
-import { aspectRatio } from "src/general";
+import { aspectRatio } from "src/General";
 import { Input } from "src/input";
 export class Camera {
-    sensivity = 10;
+    sensivity = 30;
+    scrollSensivity = 10;
     origin: vec3 = [0, 0, 0];
     orientation: quat = quat.create();
     viewMatrix: mat4 = mat4.create();
@@ -27,7 +28,7 @@ export class Camera {
         this.pitch += Input.mouseDelta.y * this.sensivity * deltaTime;
         this.yaw += Input.mouseDelta.x * this.sensivity * deltaTime;
 
-        this.radius += Input.scroll * this.sensivity * deltaTime;
+        this.radius += Input.scroll * this.scrollSensivity * deltaTime;
         this.radius = Math.max(this.minRadius, Math.min(this.maxRadius, this.radius));
 
         const pitchLimit = 90 - 0.1;

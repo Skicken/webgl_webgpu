@@ -1,23 +1,24 @@
 import { GUI } from "lil-gui";
-import { DisplayNoSupport } from "src/general";
-import { GenerateParticleBuffer } from "src/shared/particleGenerator";
-import { Scene } from "src/shared/scene";
+import { Scene } from "src/interfaces/Scene";
+import { GenerateParticleBuffer } from "src/shared/ParticleGenerator";
 
+import { DisplayNoSupport, HideNoSupport } from "./NoSupport";
 import ShaderSource from "./shaders/scene1.wgsl";
 import { Camera } from "./utilites/Camera";
 
 export class WebGPUScene1 implements Scene {
     constructor() {}
 
-    private gui: GUI | undefined;
-    static sceneName = "scene1";
+    gui: GUI | undefined;
+    static sceneName = "Particle Sphere";
     canvas: HTMLCanvasElement;
     device: GPUDevice | undefined = undefined;
     context: GPUCanvasContext;
     renderPipeline: GPURenderPipeline;
+    renderPassDescriptor: GPURenderPassDescriptor;
     camera: Camera = new Camera();
 
-    particleCount = 1000;
+    particleCount = 10000;
     totalTime = 0;
     particleBuffer: GPUBuffer;
     viewBuffer: GPUBuffer;
@@ -47,7 +48,8 @@ export class WebGPUScene1 implements Scene {
         this.canvas = canvas;
         this.gui = gui.addFolder(WebGPUScene1.sceneName);
         this.gui
-            .add(this, "particleCount", 1000, 1e6, 100)
+            .add(this, "particleCount", 10000, 1e7, 10000)
+            .name("Particle Count")
             .onFinishChange(() => {
                 this.initScene();
             });
@@ -61,7 +63,8 @@ export class WebGPUScene1 implements Scene {
             device: this.device,
             format: navigator.gpu.getPreferredCanvasFormat()
         });
-        this.initScene();
+        this.camera.radius = 2;
+        await this.initScene();
     }
     update(deltaTime: number): void {
         this.camera.update(deltaTime);
@@ -72,18 +75,6 @@ export class WebGPUScene1 implements Scene {
         if (!device || !this.webgpuIsSupported) {
             return;
         }
-        const commandEncoder = this.device.createCommandEncoder();
-        const clearColor = { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
-        const renderPassDescriptor = {
-            colorAttachments: [
-                {
-                    clearValue: clearColor,
-                    loadOp: "clear" as GPULoadOp,
-                    storeOp: "store" as GPUStoreOp,
-                    view: this.context.getCurrentTexture().createView()
-                }
-            ]
-        };
         device.queue.writeBuffer(this.viewBuffer, 0, this.camera.viewMatrix);
         device.queue.writeBuffer(
             this.projectionBuffer,
@@ -96,8 +87,9 @@ export class WebGPUScene1 implements Scene {
             new Float32Array([this.totalTime])
         );
 
+        const commandEncoder = this.device.createCommandEncoder();
         const passEncoder =
-            commandEncoder.beginRenderPass(renderPassDescriptor);
+            commandEncoder.beginRenderPass(this.renderPassDescriptor);
         passEncoder.setPipeline(this.renderPipeline);
         passEncoder.setVertexBuffer(0, this.particleBuffer);
         passEncoder.setBindGroup(0, this.bindGroup);
@@ -106,11 +98,22 @@ export class WebGPUScene1 implements Scene {
         this.device.queue.submit([commandEncoder.finish()]);
     }
 
-    private initScene() {
+    private async initScene() {
         if (!this.device || !this.webgpuIsSupported) {
             return;
         }
-
+        this.totalTime = 0;
+        const clearColor = { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+        this.renderPassDescriptor = {
+            colorAttachments: [
+                {
+                    clearValue: clearColor,
+                    loadOp: "clear" as GPULoadOp,
+                    storeOp: "store" as GPUStoreOp,
+                    view: this.context.getCurrentTexture().createView()
+                }
+            ]
+        };
         const shader = this.device.createShaderModule({
             code: ShaderSource
         });
@@ -138,7 +141,7 @@ export class WebGPUScene1 implements Scene {
         ];
 
         this.particleBuffer = this.device.createBuffer({
-            size: particleBuffer.byteLength, // make it big enough to store vertices in
+            size: particleBuffer.byteLength,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
         });
 
@@ -193,9 +196,7 @@ export class WebGPUScene1 implements Scene {
         });
 
         const pipelineLayout = this.device.createPipelineLayout({
-            bindGroupLayouts: [
-                bindGroupLayout // @group(0)
-            ]
+            bindGroupLayouts: [bindGroupLayout]
         });
         this.device.queue.writeBuffer(
             this.particleBuffer,
@@ -227,8 +228,10 @@ export class WebGPUScene1 implements Scene {
         };
         this.renderPipeline =
             this.device.createRenderPipeline(pipelineDescriptor);
+        console.log("init");
     }
     delete(): void {
+        HideNoSupport();
         this.gui.destroy();
     }
 }

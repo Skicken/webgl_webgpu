@@ -1,32 +1,38 @@
 import { GlScene1 } from "src/gl/Scene1GL";
 import { GlScene2 } from "src/gl/Scene2GL";
-import { Scene } from "src/shared/scene";
+import { Scene } from "src/interfaces/Scene";
 import { WebGPUScene1 } from "src/webgpu/Scene1WebGPU";
+import { WebGPUScene2 } from "src/webgpu/Scene2WebGPU";
+
+export const initSceneName = GlScene1.sceneName;
+export const initRenderer: "webgl2" | "webgpu" = "webgl2";
 
 export const WebGLSceneMap: Map<string, new () => Scene> = new Map<
     string,
     new () => Scene
 >();
-WebGLSceneMap.set("scene1", GlScene1);
-WebGLSceneMap.set("scene2", GlScene2);
+WebGLSceneMap.set(GlScene1.sceneName, GlScene1);
+WebGLSceneMap.set(GlScene2.sceneName, GlScene2);
 
 export const WebGPUSceneMap: Map<string, new () => Scene> = new Map<
     string,
     new () => Scene
 >();
-WebGPUSceneMap.set("scene1", WebGPUScene1);
+
+WebGPUSceneMap.set(WebGPUScene1.sceneName, WebGPUScene1);
+WebGPUSceneMap.set(WebGPUScene2.sceneName, WebGPUScene2);
 
 export const BuildScene = (
     renderer: "webgl2" | "webgpu",
     scenename: string
 ): Scene => {
-    let sceneClass:new ()=>Scene;
+    let sceneClass: new () => Scene;
     if (renderer == "webgpu") {
         sceneClass = WebGPUSceneMap.get(scenename);
     } else {
         sceneClass = WebGLSceneMap.get(scenename);
     }
-    return new sceneClass(); 
+    return new sceneClass();
 };
 export const RendererScenesStrings = (renderer: "webgl2" | "webgpu") => {
     if (renderer == "webgpu") {

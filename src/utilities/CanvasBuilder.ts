@@ -1,4 +1,4 @@
-import { canvasHeight, canvasWidth } from "src/general";
+import { canvasHeight, canvasWidth } from "src/General";
 import { Input } from "src/input";
 
 export let fadeOutActive = false;
@@ -25,8 +25,8 @@ export const buildCanvas = () => {
             return;
         }
 
-        const alpha = 0.6; // Smoothing factor.
-        const threshold = 0.5; // Deadzone threshold.
+        const alpha = 0.6; 
+        const threshold = 0.5; 
 
         const mouse: MouseEvent = e as MouseEvent;
 
@@ -67,5 +67,7 @@ export const buildCanvas = () => {
             document.exitPointerLock();
         }
     });
+    newCanvas.width = canvasWidth;
+    newCanvas.height = canvasHeight;
     return newCanvas;
 };

@@ -1,9 +1,5 @@
 import { getParser } from "bowser";
 
-export const canvasWidth = 1920;
-export const canvasHeight = 1080;
-export const aspectRatio = canvasWidth / canvasHeight;
-
 export const DisplayNoSupport = () => {
     const nowebgpusupport = document.getElementById(
         "nowebgpusupport"

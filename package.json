@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "@eslint/js": "^9.16.0",
+    "@types/node": "^22.10.2",
     "@types/stats.js": "^0.17.3",
     "@types/web": "^0.0.187",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
@@ -45,11 +46,13 @@
   },
   "dependencies": {
     "@types/stats": "^0.16.30",
+    "@types/three": "^0.171.0",
     "bowser": "^2.11.0",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "gl-matrix": "^3.4.3",
     "rand-seed": "^2.1.7",
     "stats.js": "^0.17.0",
+    "three": "^0.171.0",
     "wgpu-matrix": "^3.3.0"
   }
 }

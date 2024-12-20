@@ -1,4 +1,4 @@
-import { mat4 } from "gl-matrix";
+import { mat4, vec3 } from "gl-matrix";
 export class GlShader {
     program: WebGLProgram;
     vertexShader: WebGLShader;
@@ -86,5 +86,8 @@ export class GlShader {
     }
     SetUniformMatrix(name: string, matrix: mat4) {
         this.gl.uniformMatrix4fv(this.GetUniformLocation(name), false, matrix);
+    }
+    SetUniform3fv(name: string, position: vec3) {
+        this.gl.uniform3fv(this.GetUniformLocation(name), position);
     }
 }

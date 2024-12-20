@@ -1,4 +1,4 @@
-import { aspectRatio } from "src/general";
+import { aspectRatio } from "src/General";
 import { Input } from "src/input";
 import { mat4, quat,vec3 } from "wgpu-matrix";
 export class Camera {

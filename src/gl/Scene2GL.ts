@@ -1,128 +1,171 @@
+import { mat4 } from "gl-matrix";
 import { GUI } from "lil-gui";
-import { Sphere } from "src/meshes/Sphere";
-import { Scene } from "src/shared/scene";
-import earthTexture from "src/textures/earth.jpg";
-import earthCloudsTexture from "src/textures/earth_clouds.jpg";
-import earthNightTexture from "src/textures/earth_night.jpg";
+import { PointLight } from "src/interfaces/PointLight";
+import { RenderableObject } from "src/interfaces/RenderableObject";
+import { Scene } from "src/interfaces/Scene";
+import { Icosphere } from "src/meshes/Icosphere";
+import { generateLights } from "src/shared/LightsGenerator";
+import { LoadScene } from "src/utilities/GlftLoader";
 
+import FragmentShader from "./shaders/Scene2/fragment.glsl";
+import LightFragmentShader from "./shaders/Scene2/lightfragment.glsl";
+import LightVertexShader from "./shaders/Scene2/lightvertex.glsl";
+import VertexShader from "./shaders/Scene2/vertex.glsl";
 import { Camera } from "./utilities/Camera";
 import { GLGeometry } from "./utilities/GLGeometry";
 import { GlShader } from "./utilities/GlShader";
-import { TextureGL } from "./utilities/TextureGL";
-import { Transform } from "./utilities/Transform";
-
+import { RenderableObjectGL } from "./utilities/RenderableObjectGL";
 export class GlScene2 implements Scene {
+    gui: GUI;
     private gl: WebGL2RenderingContext;
-    private shader: GlShader;
-
-    private earthTexture: TextureGL;
-    private earthNight: TextureGL;
-    private earthClouds: TextureGL;
-
     private camera: Camera = new Camera();
-    private ObjectTransform: Transform = new Transform();
-    private sphere: GLGeometry;
-    sphereHeightSegments = 32;
-    sphereWidthSegments = 32;
+    private canvas: HTMLCanvasElement;
+    static sceneName = "Model Lighting";
+    private shader: GlShader;
+    private lightShader: GlShader;
 
+    private glrenderables: RenderableObjectGL[] = [];
+    private lights: PointLight[] = [];
+    private lightGeometry: GLGeometry;
+
+    lightsNumber: number = 1;
+    showLights: boolean = true;
     update(deltaTime: number): void {
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        const rotation = this.ObjectTransform.eulerRotation;
-        this.ObjectTransform.eulerRotation = [
-            rotation[0],
-            rotation[1] + deltaTime,
-            rotation[2]
-        ];
-
         this.camera.update(deltaTime);
+    }
+    render(): void {
+        const gl = this.gl;
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        for (const renderable of this.glrenderables) {
+            this.gl.bindVertexArray(renderable.vao);
+            this.shader.Bind();
 
-        this.gl.bindVertexArray(this.sphere.vao);
+            this.shader.SetUniform1i("diffuseTexture", 0);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, renderable.diffuse);
 
-        this.shader.Bind();
-        this.shader.SetUniform1i("earth_day", 0);
-        this.gl.activeTexture(this.gl.TEXTURE0);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.earthTexture.texture);
+            this.shader.SetUniform1i("emissiveTexture", 1);
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, renderable.emissive);
 
-        this.shader.SetUniform1i("earth_night", 1);
-        this.gl.activeTexture(this.gl.TEXTURE1);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.earthNight.texture);
+            this.shader.SetUniform1i("metalnessTexture", 2);
+            gl.activeTexture(gl.TEXTURE2);
+            gl.bindTexture(gl.TEXTURE_2D, renderable.metalness);
 
-        this.shader.SetUniform1i("earth_clouds", 2);
-        this.gl.activeTexture(this.gl.TEXTURE2);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.earthClouds.texture);
+            this.shader.SetUniform1i("roughnessTexture", 3);
+            gl.activeTexture(gl.TEXTURE3);
+            gl.bindTexture(gl.TEXTURE_2D, renderable.roughness);
 
-        this.shader.SetUniformMatrix(
+            this.shader.SetUniform1i("normalTexture", 4);
+            gl.activeTexture(gl.TEXTURE4);
+            gl.bindTexture(gl.TEXTURE_2D, renderable.normal);
+
+            this.shader.SetUniform1i("aoTexture", 5);
+            gl.activeTexture(gl.TEXTURE5);
+            gl.bindTexture(gl.TEXTURE_2D, renderable.ao);
+
+            this.shader.SetUniform3fv("camPos", this.camera.position);
+            this.BindLights();
+            this.shader.SetUniformMatrix("model", mat4.create());
+            this.shader.SetUniformMatrix(
+                "projection",
+                this.camera.projectionMatrix
+            );
+            this.shader.SetUniformMatrix("view", this.camera.viewMatrix);
+
+            this.gl.drawElements(
+                gl.TRIANGLES,
+                renderable.renderableObject.indices.length,
+                gl.UNSIGNED_INT,
+                0
+            );
+        }
+        if (this.showLights) {
+            this.DrawLights();
+        }
+    }
+    async init(canvas: HTMLCanvasElement, gui: GUI | undefined) {
+        this.canvas = canvas;
+        this.camera.maxRadius = 2;
+        this.camera.radius= 0.5
+        this.camera.minRadius = 0.5;
+        this.camera.scrollSensivity = 3;
+
+        this.gl = canvas.getContext("webgl2") as WebGL2RenderingContext;
+        this.gui = gui.addFolder(GlScene2.sceneName);
+
+        this.gui
+            .add(this, "lightsNumber", 1, 256, 1)
+            .name("Light Count")
+            .onFinishChange(() => {
+                this.initScene();
+            });
+        this.gui
+            .add(this, "showLights")
+            .name("Show Lights")
+            .onFinishChange(() => {
+                this.initScene();
+            });
+        await this.initScene();
+    }
+    private BindLights() {
+        this.shader.SetUniform1i("lightCount", this.lights.length);
+        for (let i = 0; i < this.lights.length; i++) {
+            const light = this.lights[i];
+            this.shader.SetUniform1f(
+                `pointLights[${i}].intensity`,
+                light.intensity
+            );
+            this.shader.SetUniform3fv(
+                `pointLights[${i}].position`,
+                light.position
+            );
+            this.shader.SetUniform3fv(`pointLights[${i}].color`, light.color);
+        }
+    }
+    private DrawLights() {
+        this.gl.bindVertexArray(this.lightGeometry.vao);
+        this.lightShader.Bind();
+        this.lightShader.SetUniformMatrix(
             "projection",
             this.camera.projectionMatrix
         );
-        this.shader.SetUniformMatrix("view", this.camera.viewMatrix);
-        this.shader.SetUniformMatrix("model", this.ObjectTransform.GetMatrix());
-
-        this.gl.drawElements(
-            this.gl.TRIANGLES,
-            this.sphere.geometry.indices.length,
-            this.gl.UNSIGNED_INT,
-            0
-        );
+        this.lightShader.SetUniformMatrix("view", this.camera.viewMatrix);
+        for (let i = 0; i < this.lights.length; i++) {
+            const light = this.lights[i];
+            this.lightShader.SetUniformMatrix("model", light.model);
+            this.lightShader.SetUniform3fv("color", light.color);
+            this.gl.drawElements(
+                this.gl.TRIANGLES,
+                this.lightGeometry.geometry.indices.length,
+                this.gl.UNSIGNED_INT,
+                0
+            );
+        }
     }
-    render(): void {}
-    init(canvas: HTMLCanvasElement, gui: GUI | undefined) {
-        this.gl = canvas.getContext("webgl2") as WebGL2RenderingContext;
-        this.gl.enable(this.gl.DEPTH_TEST);
-        const sceneGUI = gui.addFolder("Scene1");
-        sceneGUI.add(this, "restartScene");
-        this.gl.viewport(0, 0, canvas.width, canvas.height);
-        this.restartScene();
-    }
-    restartScene() {
-        this.gl.clearColor(0.0, 0, 0, 1);
-
+    private async initScene() {
+        const gl = this.gl;
+        gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+        gl.enable(this.gl.DEPTH_TEST);
+        gl.clearColor(0.0, 0.0, 0.0, 1);
         this.shader = new GlShader(this.gl, VertexShader, FragmentShader);
-        this.sphere = new GLGeometry(this.gl, new Sphere(128, 128, true));
-        this.earthTexture = new TextureGL(this.gl, earthTexture);
-        this.earthNight = new TextureGL(this.gl, earthNightTexture);
-        this.earthClouds = new TextureGL(this.gl, earthCloudsTexture);
-        this.ObjectTransform.scale = [1, 0.95, 1];
+        this.lightShader = new GlShader(
+            this.gl,
+            LightVertexShader,
+            LightFragmentShader
+        );
+        const icosphere = new Icosphere(2);
+        this.lightGeometry = new GLGeometry(this.gl, icosphere);
+        const renderables: RenderableObject[] = await LoadScene(
+            "./assets/DamagedHelmet.glb"
+        );
+        for (const renderable of renderables) {
+            this.glrenderables.push(new RenderableObjectGL(gl, renderable));
+        }
+        this.lights = generateLights(this.lightsNumber, 2);
     }
 
     delete(): void {
-        throw new Error("Method not implemented.");
+        this.gui.destroy();
     }
 }
-
-export const VertexShader = `#version 300 es
-layout (location = 0) in vec3 position;
-layout (location = 1) in vec3 color;
-layout (location = 2) in vec2 uv;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-out vec2 fragUV;
-out vec3 normal;
-
-void main() {
-  gl_Position = projection * view * model * vec4(position, 1.0f); 
-  fragUV = uv;
-  normal = normalize(vec3(model * vec4(position, 1.0f)));
-}
-`;
-
-export const FragmentShader = `#version 300 es
-precision mediump float;
-out vec4 fragColor;
-in vec2 fragUV;
-in vec3 normal;
-
-uniform sampler2D earth_day;
-uniform sampler2D earth_night;
-uniform sampler2D earth_clouds;
-
-vec3 lightDirection = vec3(-1.0, 0.0, 0.0);
-void main() {
-    float intensity = dot(normal, lightDirection);
-
-    vec4 earthColor = mix(texture(earth_night, fragUV), texture(earth_day, fragUV), intensity) + texture(earth_clouds, fragUV);
-    fragColor = earthColor;
-}`;
