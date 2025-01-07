@@ -6,26 +6,27 @@ struct VertexOutput {
 };
 
 struct PointLight {
-    intensity: f32,
     position: vec3<f32>,
     color: vec3<f32>,
+    intensity: f32,
 };
 const PI: f32 = 3.14159265359;
 @group(0) @binding(0) var<uniform> view: mat4x4<f32>;
 @group(0) @binding(1) var<uniform> projection: mat4x4<f32>;
 
-@group(2) @binding(0) var<uniform> model: mat4x4<f32>;
-@group(2) @binding(1) var textureSampler: sampler;
-@group(2) @binding(2) var albedoTexture: texture_2d<f32>;
-@group(2) @binding(3) var roughnessTexture: texture_2d<f32>;
-@group(2) @binding(4) var emissiveTexture: texture_2d<f32>;
-@group(2) @binding(5) var normalTexture: texture_2d<f32>;
-@group(2) @binding(6) var metalTexture: texture_2d<f32>;
-@group(2) @binding(7) var aoTexture: texture_2d<f32>;
-
 @group(1) @binding(0) var<uniform> camPos: vec3<f32>;
 @group(1) @binding(1) var<uniform> lights: array<PointLight, 256>;
 @group(1) @binding(2) var<uniform> lightsCount: i32;
+
+@group(2) @binding(0) var textureSampler: sampler;
+@group(2) @binding(1) var albedoTexture: texture_2d<f32>;
+@group(2) @binding(2) var roughnessTexture: texture_2d<f32>;
+@group(2) @binding(3) var emissiveTexture: texture_2d<f32>;
+@group(2) @binding(4) var normalTexture: texture_2d<f32>;
+@group(2) @binding(5) var metalTexture: texture_2d<f32>;
+@group(2) @binding(6) var aoTexture: texture_2d<f32>;
+
+@group(3) @binding(0) var<uniform> model: mat4x4<f32>;
 
 fn fresnelSchlick(cosTheta: f32, F0: vec3<f32>) -> vec3<f32> {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);

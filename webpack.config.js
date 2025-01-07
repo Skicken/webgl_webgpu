@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 const isProduction = process.env.NODE_ENV == "production";
 
@@ -19,7 +20,7 @@ const config = {
         static: [
             {
                 directory: path.join(__dirname, "public"),
-                publicPath: "/assets"
+                publicPath: "/"
             },
             {
                 directory: path.join(__dirname, "dist")
@@ -31,12 +32,16 @@ const config = {
     plugins: [
         new HtmlWebpackPlugin({
             template: "index.html"
+        }),
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: path.resolve(__dirname, "public"), to: "assets" }
+            ]
         })
     ],
 
     module: {
         rules: [
-
             {
                 test: /\.(ts|tsx)$/i,
                 loader: "ts-loader",
@@ -48,7 +53,7 @@ const config = {
             },
             {
                 test: /\.(png|jpg|glb)$/i,
-                type: "asset/resource",
+                type: "asset/resource"
             },
             {
                 test: /\.(glsl|wgsl)$/i,

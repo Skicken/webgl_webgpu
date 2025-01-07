@@ -1,6 +1,6 @@
 import { mat4, quat, vec3 } from "gl-matrix";
-import { aspectRatio } from "src/General";
-import { Input } from "src/input";
+import { aspectRatio } from "src/utilities/General";
+import { Input } from "src/utilities/Input";
 export class Camera {
     sensivity = 30;
     scrollSensivity = 10;

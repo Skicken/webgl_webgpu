@@ -15,6 +15,6 @@ out vec3 Normal;
 void main() {
     uvFrag = uv;
     WorldPos = (model*vec4(position,1.0f)).rgb;
-    Normal = normal;
+    Normal = (model*vec4(normal,0.0f)).rgb;
     gl_Position = projection * view * model * vec4(position, 1.0f);
 }

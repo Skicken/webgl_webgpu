@@ -20,9 +20,9 @@ in vec3 WorldPos;
 in vec3 Normal;
 
 struct PointLight {
-    float intensity;
     vec3 position;
     vec3 color;
+    float intensity;
 };
 
 uniform PointLight pointLights[maxPointLights];
@@ -78,14 +78,11 @@ void main() {
     vec3 normalMap = texture(normalTexture, uvFrag).rgb;
     normalMap = normalize(normalMap * 2.0 - 1.0);
 
-    vec3 N = normalize(Normal);
-
-    N = normalize(mix(N, normalMap, 0.1));
+    vec3 N = normalize(mix(normalize(Normal), normalMap, 0.1));
 
     vec3 V = normalize(camPos - WorldPos);
 
-    vec3 F0 = vec3(0.04);
-    F0 = mix(F0, albedo, metalness);
+    vec3 F0 = mix(vec3(0.04), albedo, metalness);
 
     vec3 Lo = vec3(0.0);
     for (int i = 0; i < min(lightCount, maxPointLights); ++i) {

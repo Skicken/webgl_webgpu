@@ -1,11 +1,11 @@
 import { GUI } from "lil-gui";
 import { Scene } from "src/interfaces/Scene";
-import { GenerateParticleBuffer } from "src/shared/ParticleGenerator";
 
 import FragmentShader from "./shaders/Scene1/fragment.glsl";
 import VertexShader from "./shaders/Scene1/vertex.glsl";
 import { Camera } from "./utilities/Camera";
 import { GlShader } from "./utilities/GlShader";
+import { GenerateParticleBuffer } from "src/utilities/ParticleGenerator";
 
 export class GlScene1 implements Scene {
     gui: GUI;
@@ -20,9 +20,12 @@ export class GlScene1 implements Scene {
     stride = 16;
     particleCount = 10000;
     totalTime = 0;
+    animateParticles = true;
 
     update(deltaTime: number): void {
-        this.totalTime += deltaTime;
+        if (this.animateParticles) {
+            this.totalTime += deltaTime;
+        }
         this.camera.update(deltaTime);
     }
     render(): void {
@@ -41,18 +44,19 @@ export class GlScene1 implements Scene {
         this.gl = canvas.getContext("webgl2") as WebGL2RenderingContext;
         this.gui = gui.addFolder(GlScene1.sceneName);
         this.gui
-            .add(this, "particleCount", 10000, 1e7, 10000)
+            .add(this, "particleCount", 10000, 1e8, 10000)
             .name("Particle Count")
             .onFinishChange(() => {
                 this.initScene();
             });
+        this.gui.add(this,"totalTime").name("Time").listen()
+        this.gui.add(this,"animateParticles").name("Animate Particles")
 
         await this.initScene();
     }
     private async initScene() {
         const gl = this.gl;
-        this.totalTime = 0;
-        this.camera.radius=1
+        this.camera.radius = 1;
         gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         gl.enable(this.gl.DEPTH_TEST);
         gl.clearColor(0.0, 0, 0, 1);

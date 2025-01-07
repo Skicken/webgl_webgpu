@@ -57,7 +57,7 @@ const guiScenes = rendering
     });
 
 const profiler = gui.addFolder("Profiler");
-profiler.add(Profiler, "profilerExecutionInSeconds", 1, 60, 1);
+profiler.add(Profiler, "profilerExecutionInSeconds", 1, 60, 1).name("Profiler execution in seconds");
 profiler.add(Profiler, "copyToClipboard").name("Copy result to clipboard");
 profiler.add(Profiler, "initProfiler").name("Initialize Profiler");
 profiler.add(Profiler, "state").name("Profiling state").disable(true).listen();

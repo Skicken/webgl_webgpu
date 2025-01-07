@@ -1,5 +1,5 @@
-import { aspectRatio } from "src/General";
-import { Input } from "src/input";
+import { aspectRatio } from "src/utilities/General";
+import { Input } from "src/utilities/Input";
 import { mat4, quat,vec3 } from "wgpu-matrix";
 export class Camera {
     sensivity = 10;

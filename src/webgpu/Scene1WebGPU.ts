@@ -1,10 +1,11 @@
 import { GUI } from "lil-gui";
 import { Scene } from "src/interfaces/Scene";
-import { GenerateParticleBuffer } from "src/shared/ParticleGenerator";
+import { GenerateParticleBuffer } from "src/utilities/ParticleGenerator";
 
 import { DisplayNoSupport, HideNoSupport } from "./NoSupport";
 import ShaderSource from "./shaders/scene1.wgsl";
 import { Camera } from "./utilites/Camera";
+import { InitDevice } from "./utilites/InitDevice";
 
 export class WebGPUScene1 implements Scene {
     constructor() {}
@@ -19,60 +20,23 @@ export class WebGPUScene1 implements Scene {
     camera: Camera = new Camera();
 
     particleCount = 10000;
+    animateParticles = true;
     totalTime = 0;
     particleBuffer: GPUBuffer;
     viewBuffer: GPUBuffer;
     timeBuffer: GPUBuffer;
     projectionBuffer: GPUBuffer;
     bindGroup: GPUBindGroup;
-    webgpuIsSupported = true;
 
-    private async initDevice() {
-        if (!navigator.gpu) {
-            this.webgpuIsSupported = false;
-            return;
-        }
-
-        const adapter = await navigator.gpu.requestAdapter();
-        console.log(adapter);
-        if (!adapter) {
-            this.webgpuIsSupported = false;
-            return;
-        }
-        this.device = await adapter.requestDevice();
-        if (!this.device) {
-            this.webgpuIsSupported = false;
-        }
-    }
-    async init(canvas: HTMLCanvasElement, gui: GUI | undefined) {
-        this.canvas = canvas;
-        this.gui = gui.addFolder(WebGPUScene1.sceneName);
-        this.gui
-            .add(this, "particleCount", 10000, 1e7, 10000)
-            .name("Particle Count")
-            .onFinishChange(() => {
-                this.initScene();
-            });
-        await this.initDevice();
-        if (!this.webgpuIsSupported) {
-            DisplayNoSupport();
-            return;
-        }
-        this.context = this.canvas.getContext("webgpu") as GPUCanvasContext;
-        this.context.configure({
-            device: this.device,
-            format: navigator.gpu.getPreferredCanvasFormat()
-        });
-        this.camera.radius = 2;
-        await this.initScene();
-    }
     update(deltaTime: number): void {
         this.camera.update(deltaTime);
-        this.totalTime += deltaTime;
+        if (this.animateParticles) {
+            this.totalTime += deltaTime;
+        }
     }
     render(): void {
         const device = this.device;
-        if (!device || !this.webgpuIsSupported) {
+        if (!device) {
             return;
         }
         device.queue.writeBuffer(this.viewBuffer, 0, this.camera.viewMatrix);
@@ -87,24 +51,8 @@ export class WebGPUScene1 implements Scene {
             new Float32Array([this.totalTime])
         );
 
-        const commandEncoder = this.device.createCommandEncoder();
-        const passEncoder =
-            commandEncoder.beginRenderPass(this.renderPassDescriptor);
-        passEncoder.setPipeline(this.renderPipeline);
-        passEncoder.setVertexBuffer(0, this.particleBuffer);
-        passEncoder.setBindGroup(0, this.bindGroup);
-        passEncoder.draw(this.particleCount);
-        passEncoder.end();
-        this.device.queue.submit([commandEncoder.finish()]);
-    }
-
-    private async initScene() {
-        if (!this.device || !this.webgpuIsSupported) {
-            return;
-        }
-        this.totalTime = 0;
         const clearColor = { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
-        this.renderPassDescriptor = {
+        const renderPassDescriptor = {
             colorAttachments: [
                 {
                     clearValue: clearColor,
@@ -114,6 +62,48 @@ export class WebGPUScene1 implements Scene {
                 }
             ]
         };
+        const commandEncoder = this.device.createCommandEncoder();
+        const passEncoder =
+            commandEncoder.beginRenderPass(renderPassDescriptor);
+        passEncoder.setPipeline(this.renderPipeline);
+        passEncoder.setVertexBuffer(0, this.particleBuffer);
+        passEncoder.setBindGroup(0, this.bindGroup);
+        passEncoder.draw(this.particleCount);
+        passEncoder.end();
+        this.device.queue.submit([commandEncoder.finish()]);
+    }
+
+    async init(canvas: HTMLCanvasElement, gui: GUI | undefined) {
+        this.canvas = canvas;
+        this.gui = gui.addFolder(WebGPUScene1.sceneName);
+        this.gui
+            .add(this, "particleCount", 10000, 1e8, 10000)
+            .name("Particle Count")
+            .onFinishChange(() => {
+                this.initScene();
+            });
+        this.gui.add(this,"totalTime").name("Time").listen()
+        this.gui.add(this,"animateParticles").name("Animate Particles")
+
+        this.device = await InitDevice();
+        if (!this.device) {
+            DisplayNoSupport();
+            return;
+        }
+
+        this.context = this.canvas.getContext("webgpu") as GPUCanvasContext;
+        this.context.configure({
+            device: this.device,
+            format: navigator.gpu.getPreferredCanvasFormat()
+        });
+        this.camera.radius = 2;
+        await this.initScene();
+    }
+
+    private async initScene() {
+        if (!this.device) {
+            return;
+        }
         const shader = this.device.createShaderModule({
             code: ShaderSource
         });

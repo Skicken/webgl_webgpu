@@ -1,4 +1,3 @@
-import { mat4 } from "gl-matrix";
 import { MeshStandardMaterial } from "three";
 
 export class RenderableObject
@@ -9,6 +8,5 @@ export class RenderableObject
     hasNormals:boolean;
     hasUVs:boolean;
     material: MeshStandardMaterial;
-    model: mat4;
 
 }

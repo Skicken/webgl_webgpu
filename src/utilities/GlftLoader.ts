@@ -100,7 +100,6 @@ export const LoadScene = (url: string): Promise<RenderableObject[]> => {
 
                     renderable.vertices = interleavedBuffer;
                     renderable.indices = new Uint32Array(index);
-                    renderable.model = mat4.create();
 
                     renderable.hasNormals = hasNormals;
                     renderable.hasUVs = hasUVs;

@@ -6,7 +6,6 @@ export class RenderableObjectWebGPU {
     buffer: GPUBuffer;
     indexBuffer: GPUBuffer;
     bindGroup: GPUBindGroup;
-    modelBuffer: GPUBuffer;
 
     sampler: GPUSampler;
     albedoTexture: GPUTexture;
@@ -32,16 +31,6 @@ export class RenderableObjectWebGPU {
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
         });
 
-        this.modelBuffer = device.createBuffer({
-            size: 64,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-        });
-
-        device.queue.writeBuffer(
-            this.modelBuffer,
-            0,
-            new Float32Array(this.data.model)
-        );
         device.queue.writeBuffer(
             this.buffer,
             0,
@@ -69,7 +58,7 @@ export class RenderableObjectWebGPU {
                 size: [bitmap.width, bitmap.height],
                 format: "rgba8unorm",
                 usage:
-                    GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+                    GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
             });
             device.queue.copyExternalImageToTexture(
                 { source: bitmap },
@@ -95,34 +84,30 @@ export class RenderableObjectWebGPU {
             entries: [
                 {
                     binding: 0,
-                    resource: { buffer: this.modelBuffer }
-                },
-                {
-                    binding: 1,
                     resource: this.sampler
                 },
                 {
-                    binding: 2,
+                    binding: 1,
                     resource: this.albedoTexture.createView()
                 },
                 {
-                    binding: 3,
+                    binding: 2,
                     resource: this.roughnessTexture.createView()
                 },
                 {
-                    binding: 4,
+                    binding: 3,
                     resource: this.emmisiveTexture.createView()
                 },
                 {
-                    binding: 5,
+                    binding: 4,
                     resource: this.normalTexture.createView()
                 },
                 {
-                    binding: 6,
+                    binding: 5,
                     resource: this.metalnessTexture.createView()
                 },
                 {
-                    binding: 7,
+                    binding: 6,
                     resource: this.ambientOcclusionTexture.createView()
                 }
             ]

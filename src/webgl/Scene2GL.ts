@@ -4,8 +4,9 @@ import { PointLight } from "src/interfaces/PointLight";
 import { RenderableObject } from "src/interfaces/RenderableObject";
 import { Scene } from "src/interfaces/Scene";
 import { Icosphere } from "src/meshes/Icosphere";
-import { generateLights } from "src/shared/LightsGenerator";
+import { BuildObjectsGrid } from "src/utilities/BuildObjectsGrid";
 import { LoadScene } from "src/utilities/GlftLoader";
+import { generateLights } from "src/utilities/LightsGenerator";
 
 import FragmentShader from "./shaders/Scene2/fragment.glsl";
 import LightFragmentShader from "./shaders/Scene2/lightfragment.glsl";
@@ -24,58 +25,60 @@ export class GlScene2 implements Scene {
     private shader: GlShader;
     private lightShader: GlShader;
 
-    private glrenderables: RenderableObjectGL[] = [];
+    private helmet: RenderableObjectGL;
     private lights: PointLight[] = [];
     private lightGeometry: GLGeometry;
+    private models: mat4[] = [];
 
     lightsNumber: number = 1;
     showLights: boolean = true;
+
     update(deltaTime: number): void {
         this.camera.update(deltaTime);
     }
     render(): void {
         const gl = this.gl;
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        for (const renderable of this.glrenderables) {
-            this.gl.bindVertexArray(renderable.vao);
-            this.shader.Bind();
+        this.gl.bindVertexArray(this.helmet.vao);
+        this.shader.Bind();
 
-            this.shader.SetUniform1i("diffuseTexture", 0);
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, renderable.diffuse);
+        this.shader.SetUniform1i("diffuseTexture", 0);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.helmet.diffuse);
 
-            this.shader.SetUniform1i("emissiveTexture", 1);
-            gl.activeTexture(gl.TEXTURE1);
-            gl.bindTexture(gl.TEXTURE_2D, renderable.emissive);
+        this.shader.SetUniform1i("emissiveTexture", 1);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, this.helmet.emissive);
 
-            this.shader.SetUniform1i("metalnessTexture", 2);
-            gl.activeTexture(gl.TEXTURE2);
-            gl.bindTexture(gl.TEXTURE_2D, renderable.metalness);
+        this.shader.SetUniform1i("metalnessTexture", 2);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, this.helmet.metalness);
 
-            this.shader.SetUniform1i("roughnessTexture", 3);
-            gl.activeTexture(gl.TEXTURE3);
-            gl.bindTexture(gl.TEXTURE_2D, renderable.roughness);
+        this.shader.SetUniform1i("roughnessTexture", 3);
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, this.helmet.roughness);
 
-            this.shader.SetUniform1i("normalTexture", 4);
-            gl.activeTexture(gl.TEXTURE4);
-            gl.bindTexture(gl.TEXTURE_2D, renderable.normal);
+        this.shader.SetUniform1i("normalTexture", 4);
+        gl.activeTexture(gl.TEXTURE4);
+        gl.bindTexture(gl.TEXTURE_2D, this.helmet.normal);
 
-            this.shader.SetUniform1i("aoTexture", 5);
-            gl.activeTexture(gl.TEXTURE5);
-            gl.bindTexture(gl.TEXTURE_2D, renderable.ao);
+        this.shader.SetUniform1i("aoTexture", 5);
+        gl.activeTexture(gl.TEXTURE5);
+        gl.bindTexture(gl.TEXTURE_2D, this.helmet.ao);
 
-            this.shader.SetUniform3fv("camPos", this.camera.position);
-            this.BindLights();
-            this.shader.SetUniformMatrix("model", mat4.create());
-            this.shader.SetUniformMatrix(
-                "projection",
-                this.camera.projectionMatrix
-            );
-            this.shader.SetUniformMatrix("view", this.camera.viewMatrix);
+        this.shader.SetUniform3fv("camPos", this.camera.position);
+        this.BindLights();
+        this.shader.SetUniformMatrix(
+            "projection",
+            this.camera.projectionMatrix
+        );
+        this.shader.SetUniformMatrix("view", this.camera.viewMatrix);
 
+        for (const model of this.models) {
+            this.shader.SetUniformMatrix("model", model);
             this.gl.drawElements(
                 gl.TRIANGLES,
-                renderable.renderableObject.indices.length,
+                this.helmet.renderableObject.indices.length,
                 gl.UNSIGNED_INT,
                 0
             );
@@ -86,10 +89,12 @@ export class GlScene2 implements Scene {
     }
     async init(canvas: HTMLCanvasElement, gui: GUI | undefined) {
         this.canvas = canvas;
-        this.camera.maxRadius = 2;
-        this.camera.radius= 0.5
-        this.camera.minRadius = 0.5;
         this.camera.scrollSensivity = 3;
+        this.camera.maxRadius = 5;
+        this.camera.radius = 2;
+        this.camera.minRadius = 1;
+        this.camera.pitch = -45;
+        this.camera.yaw = -45;
 
         this.gl = canvas.getContext("webgl2") as WebGL2RenderingContext;
         this.gui = gui.addFolder(GlScene2.sceneName);
@@ -106,6 +111,7 @@ export class GlScene2 implements Scene {
             .onFinishChange(() => {
                 this.initScene();
             });
+
         await this.initScene();
     }
     private BindLights() {
@@ -147,6 +153,7 @@ export class GlScene2 implements Scene {
         const gl = this.gl;
         gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         gl.enable(this.gl.DEPTH_TEST);
+        gl.cullFace(gl.BACK);
         gl.clearColor(0.0, 0.0, 0.0, 1);
         this.shader = new GlShader(this.gl, VertexShader, FragmentShader);
         this.lightShader = new GlShader(
@@ -159,10 +166,10 @@ export class GlScene2 implements Scene {
         const renderables: RenderableObject[] = await LoadScene(
             "./assets/DamagedHelmet.glb"
         );
-        for (const renderable of renderables) {
-            this.glrenderables.push(new RenderableObjectGL(gl, renderable));
-        }
+
+        this.helmet = new RenderableObjectGL(gl, renderables[0]);
         this.lights = generateLights(this.lightsNumber, 2);
+        this.models = BuildObjectsGrid(25, 0.6);
     }
 
     delete(): void {

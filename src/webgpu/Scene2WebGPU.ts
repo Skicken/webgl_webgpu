@@ -1,13 +1,16 @@
+import { mat4 } from "gl-matrix";
 import { GUI } from "lil-gui";
 import { RenderableObject } from "src/interfaces/RenderableObject";
 import { Scene } from "src/interfaces/Scene";
-import { generateLights } from "src/shared/LightsGenerator";
+import { BuildObjectsGrid } from "src/utilities/BuildObjectsGrid";
 import { LoadScene } from "src/utilities/GlftLoader";
+import { generateLights as GenerateLights } from "src/utilities/LightsGenerator";
 
 import { DisplayNoSupport, HideNoSupport } from "./NoSupport";
 import ShaderSource from "./shaders/scene2.wgsl";
 import LightShader from "./shaders/scene2_light.wgsl";
 import { Camera } from "./utilites/Camera";
+import { InitDevice } from "./utilites/InitDevice";
 import { RenderableObjectWebGPU } from "./utilites/RenderableObjectWebGPU";
 import { PointLightWebGPU } from "./utilites/WebGPUPointLight";
 
@@ -23,8 +26,8 @@ export class WebGPUScene2 implements Scene {
     lightRenderPipeline: GPURenderPipeline;
     camera: Camera = new Camera();
 
+    private models: mat4[] = [];
     renderableHelmet: RenderableObjectWebGPU;
-    renderPassDescriptor: GPURenderPassDescriptor;
 
     viewBuffer: GPUBuffer;
     projectionBuffer: GPUBuffer;
@@ -32,70 +35,20 @@ export class WebGPUScene2 implements Scene {
     lightCountBuffer: GPUBuffer;
     camPositionBuffer: GPUBuffer;
 
+    modelBindGroup: GPUBindGroup[] = [];
     bindGroup: GPUBindGroup;
     vpBindGroup: GPUBindGroup;
 
     depthTexture: GPUTexture;
-    webgpuIsSupported = true;
     lightsNumber: number = 1;
     showLights: boolean = true;
     private lights: PointLightWebGPU[] = [];
-    private async initDevice() {
-        if (!navigator.gpu) {
-            this.webgpuIsSupported = false;
-            return;
-        }
-
-        const adapter = await navigator.gpu.requestAdapter();
-        if (!adapter) {
-            this.webgpuIsSupported = false;
-            return;
-        }
-        this.device = await adapter.requestDevice();
-        if (!this.device) {
-            this.webgpuIsSupported = false;
-        }
-    }
-    async init(canvas: HTMLCanvasElement, gui: GUI | undefined) {
-        this.canvas = canvas;
-        this.gui = gui.addFolder(WebGPUScene2.sceneName);
-        this.gui
-            .add(this, "lightsNumber", 1, 256, 1)
-            .name("Light number")
-            .onFinishChange(() => {
-                this.initScene();
-            });
-
-        this.gui
-            .add(this, "showLights")
-            .name("Show Lights")
-            .onFinishChange(() => {
-                this.initScene();
-            });
-
-        await this.initDevice();
-        if (!this.webgpuIsSupported) {
-            DisplayNoSupport();
-            return;
-        }
-        this.context = this.canvas.getContext("webgpu") as GPUCanvasContext;
-        this.context.configure({
-            device: this.device,
-            format: navigator.gpu.getPreferredCanvasFormat()
-        });
-
-        this.camera.maxRadius = 2;
-        this.camera.radius = 0.5;
-        this.camera.minRadius = 0.5;
-
-        await this.initScene();
-    }
     update(deltaTime: number): void {
         this.camera.update(deltaTime);
     }
     render(): void {
         const device = this.device;
-        if (!device || !this.webgpuIsSupported) {
+        if (!device) {
             return;
         }
         device.queue.writeBuffer(this.viewBuffer, 0, this.camera.viewMatrix);
@@ -110,10 +63,26 @@ export class WebGPUScene2 implements Scene {
             new Float32Array(this.camera.position)
         );
 
+        const clearColor = { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+        const renderPassDescriptor = {
+            colorAttachments: [
+                {
+                    clearValue: clearColor,
+                    loadOp: "clear" as GPULoadOp,
+                    storeOp: "store" as GPUStoreOp,
+                    view: this.context.getCurrentTexture().createView()
+                }
+            ],
+            depthStencilAttachment: {
+                view: this.depthTexture.createView(),
+                depthClearValue: 1.0,
+                depthLoadOp: "clear" as GPULoadOp,
+                depthStoreOp: "store" as GPUStoreOp
+            }
+        };
         const commandEncoder = this.device.createCommandEncoder();
-        const passEncoder = commandEncoder.beginRenderPass(
-            this.renderPassDescriptor
-        );
+        const passEncoder =
+            commandEncoder.beginRenderPass(renderPassDescriptor);
 
         passEncoder.setPipeline(this.modelRenderPipeline);
         passEncoder.setVertexBuffer(0, this.renderableHelmet.buffer);
@@ -121,7 +90,10 @@ export class WebGPUScene2 implements Scene {
         passEncoder.setBindGroup(0, this.vpBindGroup);
         passEncoder.setBindGroup(1, this.bindGroup);
         passEncoder.setBindGroup(2, this.renderableHelmet.bindGroup);
-        passEncoder.drawIndexed(this.renderableHelmet.data.indices.length);
+        for (const modelBindGroup of this.modelBindGroup) {
+            passEncoder.setBindGroup(3,modelBindGroup);
+            passEncoder.drawIndexed(this.renderableHelmet.data.indices.length);
+        }
 
         if (this.showLights) {
             passEncoder.setPipeline(this.lightRenderPipeline);
@@ -143,8 +115,46 @@ export class WebGPUScene2 implements Scene {
         this.device.queue.submit([commandEncoder.finish()]);
     }
 
+    async init(canvas: HTMLCanvasElement, gui: GUI | undefined) {
+        this.canvas = canvas;
+        this.gui = gui.addFolder(WebGPUScene2.sceneName);
+        this.gui
+            .add(this, "lightsNumber", 1, 256, 1)
+            .name("Light number")
+            .onFinishChange(() => {
+                this.initScene();
+            });
+
+        this.gui
+            .add(this, "showLights")
+            .name("Show Lights")
+            .onFinishChange(() => {
+                this.initScene();
+            });
+
+        this.device = await InitDevice();
+        if (!this.device) {
+            DisplayNoSupport();
+            return;
+        }
+
+        this.context = this.canvas.getContext("webgpu") as GPUCanvasContext;
+        this.context.configure({
+            device: this.device,
+            format: navigator.gpu.getPreferredCanvasFormat()
+        });
+
+        this.camera.maxRadius = 5;
+        this.camera.radius = 2;
+        this.camera.minRadius = 1;
+        this.camera.pitch = -45;
+        this.camera.yaw = -45;
+
+        await this.initScene();
+    }
+
     private async initScene() {
-        if (!this.device || !this.webgpuIsSupported) {
+        if (!this.device) {
             return;
         }
 
@@ -166,26 +176,7 @@ export class WebGPUScene2 implements Scene {
             usage: GPUTextureUsage.RENDER_ATTACHMENT
         });
 
-        const clearColor = { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
-
-        const depthTextureView = this.depthTexture.createView();
-        this.renderPassDescriptor = {
-            colorAttachments: [
-                {
-                    clearValue: clearColor,
-                    loadOp: "clear" as GPULoadOp,
-                    storeOp: "store" as GPUStoreOp,
-                    view: this.context.getCurrentTexture().createView()
-                }
-            ],
-            depthStencilAttachment: {
-                view: depthTextureView,
-                depthClearValue: 1.0,
-                depthLoadOp: "clear" as GPULoadOp,
-                depthStoreOp: "store" as GPUStoreOp
-            }
-        };
-        const lights = generateLights(this.lightsNumber, 2);
+        const lights = GenerateLights(this.lightsNumber, 2);
 
         const lightGroupLayout = this.device.createBindGroupLayout({
             entries: [
@@ -238,13 +229,13 @@ export class WebGPUScene2 implements Scene {
             entries: [
                 {
                     binding: 0,
-                    visibility: GPUShaderStage.VERTEX,
-                    buffer: {}
+                    visibility: GPUShaderStage.FRAGMENT,
+                    sampler: {}
                 },
                 {
                     binding: 1,
                     visibility: GPUShaderStage.FRAGMENT,
-                    sampler: {}
+                    texture: {}
                 },
                 {
                     binding: 2,
@@ -268,11 +259,6 @@ export class WebGPUScene2 implements Scene {
                 },
                 {
                     binding: 6,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: {}
-                },
-                {
-                    binding: 7,
                     visibility: GPUShaderStage.FRAGMENT,
                     texture: {}
                 }
@@ -310,8 +296,7 @@ export class WebGPUScene2 implements Scene {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
 
-        const lightStructSize = 4 + 12 + 12;
-        const alignedLightStructSize = Math.ceil(lightStructSize / 48) * 48;
+        const alignedLightStructSize = 32;
         this.lightBuffer = this.device.createBuffer({
             size: alignedLightStructSize * 256,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
@@ -321,9 +306,9 @@ export class WebGPUScene2 implements Scene {
         for (let i = 0; i < this.lights.length; i++) {
             const light = this.lights[i];
             const offset = (i * alignedLightStructSize) / 4;
-            lightData[offset] = light.data.intensity;
-            lightData.set(light.data.position, offset + 4);
-            lightData.set(light.data.color, offset + 8);
+            lightData.set(light.data.position, offset);
+            lightData.set(light.data.color, offset + 4);
+            lightData[offset + 7] = light.data.intensity;
         }
         this.device.queue.writeBuffer(this.lightBuffer, 0, lightData);
         this.device.queue.writeBuffer(
@@ -365,6 +350,15 @@ export class WebGPUScene2 implements Scene {
                 }
             ]
         });
+        const modelBindGroupLayout = this.device.createBindGroupLayout({
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {}
+                }
+            ]
+        });
 
         this.vpBindGroup = this.device.createBindGroup({
             layout: vpBindGroupLayout,
@@ -401,11 +395,15 @@ export class WebGPUScene2 implements Scene {
             bindGroupLayouts: [
                 vpBindGroupLayout,
                 lightBindGroupLayout,
-                modelGroupLayout
+                modelGroupLayout,
+                modelBindGroupLayout
             ]
         });
         const lightPipelineLayout = this.device.createPipelineLayout({
-            bindGroupLayouts: [vpBindGroupLayout, lightGroupLayout]
+            bindGroupLayouts: [
+                vpBindGroupLayout,
+                lightGroupLayout,
+            ]
         });
 
         const pipelineDescriptor: GPURenderPipelineDescriptor = {
@@ -464,6 +462,25 @@ export class WebGPUScene2 implements Scene {
         this.lightRenderPipeline = this.device.createRenderPipeline(
             lightPipelineDescriptor
         );
+        this.models = BuildObjectsGrid(25, 0.6);
+        for (const model of this.models) {
+            const modelBuffer = this.device.createBuffer({
+                size: 64,
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+            });
+            this.device.queue.writeBuffer(modelBuffer, 0, new Float32Array(model));
+            this.modelBindGroup.push(
+                this.device.createBindGroup({
+                    layout: modelBindGroupLayout,
+                    entries: [
+                        {
+                            binding: 0,
+                            resource: { buffer: modelBuffer }
+                        }
+                    ]
+                })
+            );
+        }
     }
     delete(): void {
         HideNoSupport();

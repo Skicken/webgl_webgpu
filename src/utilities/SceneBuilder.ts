@@ -1,6 +1,6 @@
-import { GlScene1 } from "src/gl/Scene1GL";
-import { GlScene2 } from "src/gl/Scene2GL";
 import { Scene } from "src/interfaces/Scene";
+import { GlScene1 } from "src/webgl/Scene1GL";
+import { GlScene2 } from "src/webgl/Scene2GL";
 import { WebGPUScene1 } from "src/webgpu/Scene1WebGPU";
 import { WebGPUScene2 } from "src/webgpu/Scene2WebGPU";
 

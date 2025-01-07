@@ -1,5 +1,5 @@
-import { canvasHeight, canvasWidth } from "src/General";
-import { Input } from "src/input";
+import { canvasHeight,canvasWidth } from "./General";
+import { Input } from "./Input";
 
 export let fadeOutActive = false;
 export function scrollFadeOut() {
@@ -59,13 +59,9 @@ export const buildCanvas = () => {
 
     newCanvas.addEventListener("mousedown", () => {
         Input.mouseDown = true;
-        newCanvas.requestPointerLock();
     });
     newCanvas.addEventListener("mouseup", () => {
         Input.mouseDown = false;
-        if (document.pointerLockElement == newCanvas) {
-            document.exitPointerLock();
-        }
     });
     newCanvas.width = canvasWidth;
     newCanvas.height = canvasHeight;
