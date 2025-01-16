@@ -38,7 +38,10 @@
   },
   "version": "1.0.0",
   "description": "My webpack project",
-  "name": "my-webpack-project",
+  "name": "webgl_webgpu",
+  "repository": {
+    "url": "https://github.com/Skicken/webgl_webgpu.git"
+  },
   "scripts": {
     "build": "webpack --mode=production --node-env=production",
     "build:dev": "webpack --mode=development",

@@ -12,7 +12,8 @@ const config = {
 
     output: {
         path: path.resolve(__dirname, "dist"),
-        publicPath: "/"
+        filename: isProduction ? "[name].[contenthash].js" : "bundle.js",
+        publicPath: "./"
     },
     devServer: {
         open: true,

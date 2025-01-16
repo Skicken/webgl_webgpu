@@ -25,5 +25,6 @@ void main() {
     );
 
     color = vec4(particleMovement, 0.5, 1.0);
+    gl_PointSize = 1.0;
     gl_Position = projection * view * vec4(finalPosition, 1.0);
 }

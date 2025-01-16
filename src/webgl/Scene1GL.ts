@@ -1,11 +1,11 @@
 import { GUI } from "lil-gui";
 import { Scene } from "src/interfaces/Scene";
+import { GenerateParticleBuffer } from "src/utilities/ParticleGenerator";
 
 import FragmentShader from "./shaders/Scene1/fragment.glsl";
 import VertexShader from "./shaders/Scene1/vertex.glsl";
 import { Camera } from "./utilities/Camera";
 import { GlShader } from "./utilities/GlShader";
-import { GenerateParticleBuffer } from "src/utilities/ParticleGenerator";
 
 export class GlScene1 implements Scene {
     gui: GUI;
@@ -30,6 +30,7 @@ export class GlScene1 implements Scene {
     }
     render(): void {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        this.gl.bindVertexArray(this.vao);
         this.shader.Bind();
         this.shader.SetUniform1f("time", this.totalTime);
         this.shader.SetUniformMatrix(
@@ -58,7 +59,6 @@ export class GlScene1 implements Scene {
         const gl = this.gl;
         this.camera.radius = 1;
         gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-        gl.enable(this.gl.DEPTH_TEST);
         gl.clearColor(0.0, 0, 0, 1);
 
         const particleBuffer: Float32Array = GenerateParticleBuffer(
